@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicare Plan ID Database - Wyoming</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .search-section {
+            margin-bottom: 40px;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.2);
+        }
+
+        .search-button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .search-button:hover {
+            background: #2980b9;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .plan-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .plan-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-size: 1em;
+        }
+
+        .website-link {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .website-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .add-plan-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 40px;
+        }
+
+        .add-plan-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #3498db;
+        }
+
+        .add-button {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            justify-self: start;
+        }
+
+        .add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Medicare Plan Database</h1>
+            <p>Quick lookup for Wyoming Medicare plans and third-party websites</p>
+        </div>
+
+        <div class="main-content">
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPlans">0</div>
+                    <div class="stat-label">Total Plans</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="searchCount">0</div>
+                    <div class="stat-label">Searches Today</div>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="searchInput" 
+                           placeholder="Enter Medicare Plan ID, Plan Name, or Insurance Company...">
+                    <button class="search-button" id="searchButton">🔍</button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection"></div>
+
+            <div class="add-plan-section">
+                <h2 style="margin-bottom: 20px; color: #2c3e50;">Add New Plan</h2>
+                <div class="add-plan-form">
+                    <div class="form-group">
+                        <label class="form-label">Plan ID</label>
+                        <input type="text" class="form-input" id="newPlanId" placeholder="e.g., H1234-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plan Name</label>
+                        <input type="text" class="form-input" id="newPlanName" placeholder="e.g., Advantage Basic">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Insurance Company</label>
+                        <input type="text" class="form-input" id="newInsuranceCompany" placeholder="e.g., UnitedHealthcare">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Third Party Website</label>
+                        <input type="url" class="form-input" id="newWebsite" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plan Type</label>
+                        <select class="form-input" id="newPlanType">
+                            <option value="Medicare Advantage">Medicare Advantage</option>
+                            <option value="Part D">Part D</option>
+                            <option value="Medigap">Medigap</option>
+                            <option value="Original Medicare">Original Medicare</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <input type="text" class="form-input" id="newNotes" placeholder="Additional information">
+                    </div>
+                </div>
+                <button class="add-button" id="addPlanButton">Add Plan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive Wyoming Medicare Plans Database - 2025
+        let medicareDatabase = [
+            // UnitedHealthcare Plans
+            {
+                planId: "H2001-044",
+                planName: "UnitedHealthcare Medicare Advantage",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "Medicare Advantage",
+                website: "https://www.uhcmedicaresolutions.com",
+                notes: "HMO plan available statewide"
+            },
+            {
+                planId: "H0019-003",
+                planName: "AARP Medicare Advantage",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "Medicare Advantage",
+                website: "https://www.aarpmedicareplans.com",
+                notes: "PPO plan through AARP"
+            },
+            {
+                planId: "S5921-036",
+                planName: "AARP MedicareRx Preferred",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "Part D",
+                website: "https://www.aarpmedicarerx.com",
+                notes: "Popular Part D prescription plan"
+            },
+            {
+                planId: "S5820-077",
+                planName: "UnitedHealthcare Medicare Rx",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "Part D",
+                website: "https://www.uhcmedicaresolutions.com",
+                notes: "Stand-alone prescription drug plan"
+            },
+            
+            // Humana Plans
+            {
+                planId: "H1036-175",
+                planName: "Humana Medicare Advantage",
+                insuranceCompany: "Humana",
+                planType: "Medicare Advantage",
+                website: "https://www.humana.com/medicare",
+                notes: "PPO plan with nationwide coverage"
+            },
+            {
+                planId: "H5216-256",
+                planName: "Humana Honor PPO",
+                insuranceCompany: "Humana",
+                planType: "Medicare Advantage",
+                website: "https://www.humana.com/medicare",
+                notes: "Enhanced benefits plan"
+            },
+            {
+                planId: "S5884-114",
+                planName: "Humana Walmart Rx Plan",
+                insuranceCompany: "Humana",
+                planType: "Part D",
+                website: "https://www.humana.com/medicare",
+                notes: "Low-cost Part D option"
+            },
+            {
+                planId: "S5617-042",
+                planName: "Humana Enhanced Low Income",
+                insuranceCompany: "Humana",
+                planType: "Part D",
+                website: "https://www.humana.com/medicare",
+                notes: "For Extra Help beneficiaries"
+            },
+            
+            // Aetna Plans
+            {
+                planId: "H5521-289",
+                planName: "Aetna Medicare Elite",
+                insuranceCompany: "Aetna",
+                planType: "Medicare Advantage",
+                website: "https://www.aetnamedicare.com",
+                notes: "PPO plan with extra benefits"
+            },
+            {
+                planId: "H0290-007",
+                planName: "Aetna Better Health",
+                insuranceCompany: "Aetna",
+                planType: "Medicare Advantage",
+                website: "https://www.aetnamedicare.com",
+                notes: "HMO plan for select counties"
+            },
+            {
+                planId: "S7692-048",
+                planName: "SilverScript Plus",
+                insuranceCompany: "Aetna",
+                planType: "Part D",
+                website: "https://www.silverscript.com",
+                notes: "Enhanced Part D benefits"
+            },
+            {
+                planId: "S7692-102",
+                planName: "SilverScript Choice",
+                insuranceCompany: "Aetna",
+                planType: "Part D",
+                website: "https://www.silverscript.com",
+                notes: "Basic Part D coverage"
+            },
+            
+            // Cigna Healthcare Plans
+            {
+                planId: "H3014-002",
+                planName: "Cigna True Choice",
+                insuranceCompany: "Cigna Healthcare",
+                planType: "Medicare Advantage",
+                website: "https://www.cignahealthcare.com/medicare",
+                notes: "PPO plan with dental/vision"
+            },
+            {
+                planId: "S8722-103",
+                planName: "Cigna Extra Rx",
+                insuranceCompany: "Cigna Healthcare",
+                planType: "Part D",
+                website: "https://www.cignahealthcare.com/medicare",
+                notes: "Comprehensive drug coverage"
+            },
+            
+            // WellCare (now part of Anthem)
+            {
+                planId: "H4922-005",
+                planName: "WellCare Medicare Advantage",
+                insuranceCompany: "Anthem/WellCare",
+                planType: "Medicare Advantage",
+                website: "https://www.wellcare.com/medicare",
+                notes: "HMO plan with extra benefits"
+            },
+            {
+                planId: "S8768-140",
+                planName: "WellCare Value Script",
+                insuranceCompany: "Anthem/WellCare",
+                planType: "Part D",
+                website: "https://www.wellcare.com/medicare",
+                notes: "Low premium Part D plan"
+            },
+            
+            // Lasso Healthcare (Wyoming-specific)
+            {
+                planId: "H7207-001",
+                planName: "Lasso Healthcare Advantage",
+                insuranceCompany: "Lasso Healthcare",
+                planType: "Medicare Advantage",
+                website: "https://www.lassohealthcare.com",
+                notes: "Wyoming-based provider with local focus"
+            },
+            {
+                planId: "H7207-002",
+                planName: "Lasso Healthcare Plus",
+                insuranceCompany: "Lasso Healthcare",
+                planType: "Medicare Advantage",
+                website: "https://www.lassohealthcare.com",
+                notes: "Enhanced Wyoming plan with extras"
+            },
+            
+            // Kaiser Permanente (limited areas)
+            {
+                planId: "H0630-022",
+                planName: "Kaiser Permanente Senior Advantage",
+                insuranceCompany: "Kaiser Permanente",
+                planType: "Medicare Advantage",
+                website: "https://healthy.kaiserpermanente.org/medicare",
+                notes: "HMO available in select Wyoming areas"
+            },
+            
+            // Blue Cross Blue Shield Plans (varies by region)
+            {
+                planId: "H0239-003",
+                planName: "Anthem MediBlue Access",
+                insuranceCompany: "Anthem Blue Cross Blue Shield",
+                planType: "Medicare Advantage",
+                website: "https://www.anthem.com/medicare",
+                notes: "PPO plan with nationwide network"
+            },
+            
+            // Private Fee-for-Service Plans
+            {
+                planId: "H8768-001",
+                planName: "Freedom Health Medicare PFFS",
+                insuranceCompany: "Freedom Health",
+                planType: "Medicare Advantage PFFS",
+                website: "https://www.freedomhealth.com",
+                notes: "Private Fee-for-Service plan"
+            },
+            {
+                planId: "H1304-012",
+                planName: "Sterling Life PFFS",
+                insuranceCompany: "Sterling Life Insurance",
+                planType: "Medicare Advantage PFFS",
+                website: "https://www.sterlinglifeinsurance.com",
+                notes: "PFFS with flexible provider access"
+            }
+        ];
+
+        let searchCount = 0;
+
+        function updateStats() {
+            document.getElementById('totalPlans').textContent = medicareDatabase.length;
+            document.getElementById('searchCount').textContent = searchCount;
+        }
+
+        function searchPlans(query) {
+            searchCount++;
+            updateStats();
+            
+            if (!query.trim()) {
+                displayResults([]);
+                return;
+            }
+
+            const searchTerm = query.toLowerCase();
+            const results = medicareDatabase.filter(plan => 
+                plan.planId.toLowerCase().includes(searchTerm) ||
+                plan.planName.toLowerCase().includes(searchTerm) ||
+                plan.insuranceCompany.toLowerCase().includes(searchTerm) ||
+                plan.planType.toLowerCase().includes(searchTerm) ||
+                (plan.notes && plan.notes.toLowerCase().includes(searchTerm))
+            );
+
+            displayResults(results);
+        }
+
+        function displayResults(results) {
+            const resultsSection = document.getElementById('resultsSection');
+            
+            if (results.length === 0) {
+                resultsSection.innerHTML = '<div class="no-results">No plans found. Try a different search term or add a new plan below.</div>';
+                return;
+            }
+
+            resultsSection.innerHTML = results.map(plan => `
+                <div class="result-card">
+                    <div class="plan-name">${plan.planName}</div>
+                    <div class="plan-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Plan ID</div>
+                            <div class="detail-value">${plan.planId}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Insurance Company</div>
+                            <div class="detail-value">${plan.insuranceCompany}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Plan Type</div>
+                            <div class="detail-value">${plan.planType}</div>
+                        </div>
+                        ${plan.notes ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Notes</div>
+                            <div class="detail-value">${plan.notes}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <a href="${plan.website}" target="_blank" class="website-link">
+                        🔗 Visit Third Party Website
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function addPlan() {
+            const planId = document.getElementById('newPlanId').value.trim();
+            const planName = document.getElementById('newPlanName').value.trim();
+            const insuranceCompany = document.getElementById('newInsuranceCompany').value.trim();
+            const website = document.getElementById('newWebsite').value.trim();
+            const planType = document.getElementById('newPlanType').value;
+            const notes = document.getElementById('newNotes').value.trim();
+
+            if (!planId || !planName || !insuranceCompany || !website) {
+                alert('Please fill in all required fields (Plan ID, Plan Name, Insurance Company, and Website)');
+                return;
+            }
+
+            // Check if plan ID already exists
+            if (medicareDatabase.some(plan => plan.planId.toLowerCase() === planId.toLowerCase())) {
+                alert('A plan with this ID already exists!');
+                return;
+            }
+
+            const newPlan = {
+                planId,
+                planName,
+                insuranceCompany,
+                planType,
+                website,
+                notes: notes || ''
+            };
+
+            medicareDatabase.push(newPlan);
+            
+            // Clear form
+            document.getElementById('newPlanId').value = '';
+            document.getElementById('newPlanName').value = '';
+            document.getElementById('newInsuranceCompany').value = '';
+            document.getElementById('newWebsite').value = '';
+            document.getElementById('newNotes').value = '';
+            
+            updateStats();
+            alert('Plan added successfully!');
+            
+            // Show the new plan in results
+            displayResults([newPlan]);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchPlans(e.target.value);
+        });
+
+        document.getElementById('searchButton').addEventListener('click', () => {
+            const query = document.getElementById('searchInput').value;
+            searchPlans(query);
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchPlans(e.target.value);
+            }
+        });
+
+        document.getElementById('addPlanButton').addEventListener('click', addPlan);
+
+        // Initialize
+        updateStats();
+        displayResults([]); // Show empty state initially
+    </script>
+</body>
+</html>
