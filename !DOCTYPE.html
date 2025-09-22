@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weston County Formulary Lookup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #0055a5;
+        }
+
+        .search-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        #planSearch {
+            flex-grow: 1;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #planTypeFilter {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .plan-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .plan-item h2 {
+            margin-top: 0;
+            color: #0055a5;
+        }
+
+        .plan-item a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .plan-item a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Weston County Formulary Lookup</h1>
+        <div class="search-controls">
+            <input type="text" id="planSearch" placeholder="Search by Plan ID or Name...">
+            <select id="planTypeFilter">
+                <option value="all">All Plans</option>
+                <option value="MA">Medicare Advantage</option>
+                <option value="D">Part D</option>
+                <option value="Medigap">Medigap</option>
+                <option value="Original">Original Medicare</option>
+            </select>
+        </div>
+
+        <div id="results">
+            <!-- Results will be injected here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const plans = [
+            // UnitedHealthcare Plans
+            {
+                planId: "H1889-018",
+                planName: "UnitedHealthcare Medicare Advantage (Patriot No Rx WY-MA01 (PPO))",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "MA",
+                website: "https://www.uhcmedicaresolutions.com",
+                notes: "This plan does NOT include prescription drug coverage ('No Rx')",
+                link: "https://www.uhc.com/medicare/health-plans/details.html/82701/045/H1889018000/2025"
+            },
+            {
+                planId: "H1889-017",
+                planName: "UnitedHealthcare Medicare Advantage (AARP Medicare Advantage from UHC WY-0002 (PPO))",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "MA",
+                website: "https://www.uhcmedicaresolutions.com",
+                notes: "None",
+                link: "https://www.uhc.com/medicare/alphadog/AAWY25PP0255370_009"
+	    },
+            {
+		planId: "H1889-016",
+                planName: "UnitedHealthcare Medicare Advantage (AARP Medicare Advantage from UHC WY-0001 (PPO))",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "MA",
+                website: "https://www.uhcmedicaresolutions.com",
+                notes: "None",
+                link: "https://www.uhc.com/medicare/alphadog/AAWY25PP0255370_009"
+
+            },
+            {
+                planId: "H0019-003",
+                planName: "AARP Medicare Advantage",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "MA",
+                website: "https://www.aarpmedicareplans.com",
+                notes: "PPO plan through AARP",
+                link: "https://www.uhc.com/medicare/alphadog/H0019_003" // Link placeholder
+            },
+            {
+                planId: "S5921-036",
+                planName: "AARP MedicareRx Preferred",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "D",
+                website: "https://www.aarpmedicarerx.com",
+                notes: "Popular Part D prescription plan",
+                link: "https://www.uhc.com/medicare/alphadog/S5921_036" // Link placeholder
+            },
+            {
+                planId: "S5820-077",
+                planName: "UnitedHealthcare Medicare Rx",
+                insuranceCompany: "UnitedHealthcare",
+                planType: "D",
+                website: "https://www.uhcmedicaresolutions.com",
+                notes: "Stand-alone prescription drug plan",
+                link: "https://www.uhc.com/medicare/formulary/S5820_077" // Link placeholder
+            },
+            
+            // Humana Plans
+            {
+                planId: "H1036-175",
+                planName: "Humana Medicare Advantage",
+                insuranceCompany: "Humana",
+                planType: "MA",
+                website: "https://www.humana.com/medicare",
+                notes: "PPO plan with nationwide coverage",
+                link: "https://www.humana.com/medicare/formulary/H1036_175" // Link placeholder
+            },
+            {
+                planId: "H5216-256",
+                planName: "Humana Honor PPO",
+                insuranceCompany: "Humana",
+                planType: "MA",
+                website: "https://www.humana.com/medicare",
+                notes: "Enhanced benefits plan",
+                link: "https://www.humana.com/medicare/formulary/H5216_256" // Link placeholder
+            },
+            {
+                planId: "S5884-114",
+                planName: "Humana Walmart Rx Plan",
+                insuranceCompany: "Humana",
+                planType: "D",
+                website: "https://www.humana.com/medicare",
+                notes: "Low-cost Part D option",
+                link: "https://www.humana.com/medicare/formulary/S5884_114" // Link placeholder
+            },
+            {
+                planId: "S5617-042",
+                planName: "Humana Enhanced Low Income",
+                insuranceCompany: "Humana",
+                planType: "D",
+                website: "https://www.humana.com/medicare",
+                notes: "For Extra Help beneficiaries",
+                link: "https://www.humana.com/medicare/formulary/S5617_042" // Link placeholder
+            },
+            
+            // Aetna Plans
+            {
+                planId: "H5521-289",
+                planName: "Aetna Medicare Elite",
+                insuranceCompany: "Aetna",
+                planType: "MA",
+                website: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf",
+                notes: "PPO plan with extra benefits",
+                link: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf"
+            },
+            {
+                planId: "H0290-007",
+                planName: "Aetna Better Health",
+                insuranceCompany: "Aetna",
+                planType: "MA",
+                website: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf",
+                notes: "HMO plan for select counties",
+                link: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf"
+            },
+            {
+                planId: "S7692-048",
+                planName: "SilverScript Plus",
+                insuranceCompany: "Aetna",
+                planType: "D",
+                website: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf",
+                notes: "Enhanced Part D benefits",
+                link: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf"
+            },
+            {
+                planId: "S7692-102",
+                planName: "SilverScript Choice",
+                insuranceCompany: "Aetna",
+                planType: "D",
+                website: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf",
+                notes: "Basic Part D coverage",
+                link: "https://www.aetna.com/medicare/documents/individual/2025/formularies/FORM_2025_25096A2z_EN.pdf"
+            },
+            
+            // Cigna Healthcare Plans
+            {
+                planId: "H3014-002",
+                planName: "Cigna True Choice",
+                insuranceCompany: "Cigna Healthcare",
+                planType: "MA",
+                website: "https://www.cignahealthcare.com/medicare",
+                notes: "PPO plan with dental/vision",
+                link: "https://www.cignahealthcare.com/medicare/formulary/H3014_002" // Link placeholder
+            },
+            {
+                planId: "S8722-103",
+                planName: "Cigna Extra Rx",
+                insuranceCompany: "Cigna Healthcare",
+                planType: "D",
+                website: "https://www.cignahealthcare.com/medicare",
+                notes: "Comprehensive drug coverage",
+                link: "https://www.cignahealthcare.com/medicare/formulary/S8722_103" // Link placeholder
+            },
+            
+            // WellCare (now part of Anthem)
+            {
+                planId: "H4922-005",
+                planName: "WellCare Medicare Advantage",
+                insuranceCompany: "Anthem/WellCare",
+                planType: "MA",
+                website: "https://www.wellcare.com/medicare",
+                notes: "HMO plan with extra benefits",
+                link: "https://www.wellcare.com/formulary/H4922_005" // Link placeholder
+            },
+            {
+                planId: "S8768-140",
+                planName: "WellCare Value Script",
+                insuranceCompany: "Anthem/WellCare",
+                planType: "D",
+                website: "https://www.wellcare.com/medicare",
+                notes: "Low premium Part D plan",
+                link: "https://www.wellcare.com/formulary/S8768_140" // Link placeholder
+            },
+            
+            // Lasso Healthcare (Wyoming-specific)
+            {
+                planId: "H7207-001",
+                planName: "Lasso Healthcare Advantage",
+                insuranceCompany: "Lasso Healthcare",
+                planType: "MA",
+                website: "https://www.lassohealthcare.com",
+                notes: "Wyoming-based provider with local focus",
+                link: "https://www.lassohealthcare.com/formulary/H7207_001" // Link placeholder
+            },
+            {
+                planId: "H7207-002",
+                planName: "Lasso Healthcare Plus",
+                insuranceCompany: "Lasso Healthcare",
+                planType: "MA",
+                website: "https://www.lassohealthcare.com",
+                notes: "Enhanced Wyoming plan with extras",
+                link: "https://www.lassohealthcare.com/formulary/H7207_002" // Link placeholder
+            },
+            
+            // Kaiser Permanente (limited areas)
+            {
+                planId: "H0630-022",
+                planName: "Kaiser Permanente Senior Advantage",
+                insuranceCompany: "Kaiser Permanente",
+                planType: "MA",
+                website: "https://healthy.kaiserpermanente.org/medicare",
+                notes: "HMO available in select Wyoming areas",
+                link: "https://healthy.kaiserpermanente.org/medicare/formulary/H0630_022" // Link placeholder
+            },
+            
+            // Blue Cross Blue Shield Plans (varies by region)
+            {
+                planId: "H0239-003",
+                planName: "Anthem MediBlue Access",
+                insuranceCompany: "Anthem Blue Cross Blue Shield",
+                planType: "MA",
+                website: "https://www.anthem.com/medicare",
+                notes: "PPO plan with nationwide network",
+                link: "https://www.anthem.com/medicare/formulary/H0239_003" // Link placeholder
+            },
+            
+            // Private Fee-for-Service Plans
+            {
+                planId: "H8768-001",
+                planName: "Freedom Health Medicare PFFS",
+                insuranceCompany: "Freedom Health",
+                planType: "MA PFFS",
+                website: "https://www.freedomhealth.com",
+                notes: "Private Fee-for-Service plan",
+                link: "https://www.freedomhealth.com/medicare/formulary/H8768_001" // Link placeholder
+            },
+            {
+                planId: "H1304-012",
+                planName: "Sterling Life PFFS",
+                insuranceCompany: "Sterling Life Insurance",
+                planType: "MA PFFS",
+                website: "https://www.sterlinglifeinsurance.com",
+                notes: "PFFS with flexible provider access",
+                link: "https://www.sterlinglifeinsurance.com/medicare/formulary/H1304_012" // Link placeholder
+            },
+            
+            // Medigap and Original Medicare (special cases)
+            {
+                planId: "MEDIGAP",
+                planName: "Medigap (Supplement)",
+                insuranceCompany: "Various",
+                planType: "Medigap",
+                website: "https://www.medicare.gov/medigap",
+                notes: "Does not have a drug formulary. Patient needs a separate Part D plan.",
+                link: "https://www.medicare.gov/basics/costs/supplementary-insurance"
+            },
+            {
+                planId: "ORIGINAL",
+                planName: "Original Medicare",
+                insuranceCompany: "Federal Government",
+                planType: "Original",
+                website: "https://www.medicare.gov",
+                notes: "Does not cover most outpatient prescription drugs. Patient needs a separate Part D plan.",
+                link: "https://www.medicare.gov/drug-coverage-part-d"
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const planSearch = document.getElementById('planSearch');
+            const planTypeFilter = document.getElementById('planTypeFilter');
+            const resultsContainer = document.getElementById('results');
+
+            const displayPlans = (filteredPlans) => {
+                resultsContainer.innerHTML = '';
+                if (filteredPlans.length === 0) {
+                    resultsContainer.innerHTML = '<p>No plans found matching your criteria.</p>';
+                    return;
+                }
+
+                filteredPlans.forEach(plan => {
+                    const planElement = document.createElement('div');
+                    planElement.classList.add('plan-item');
+
+                    let planHtml = `
+                        <h2>${plan.planName}</h2>
+                        <p><strong>Insurance Company:</strong> ${plan.insuranceCompany || 'N/A'}</p>
+                        <p><strong>Plan ID:</strong> ${plan.planId}</p>
+                        <p><strong>Type:</strong> ${plan.planType}</p>
+                        <p><strong>Notes:</strong> ${plan.notes}</p>
+                    `;
+
+                    if (plan.planType.includes('MA') || plan.planType === 'D') {
+                        planHtml += `<a href="${plan.link}" target="_blank">View Formulary</a>`;
+                    } else {
+                        planHtml += `<a href="${plan.link}" target="_blank">View Medicare Info</a>`;
+                    }
+                    
+                    planElement.innerHTML = planHtml;
+                    resultsContainer.appendChild(planElement);
+                });
+            };
+
+            const filterPlans = () => {
+                const searchTerm = planSearch.value.toLowerCase();
+                const selectedType = planTypeFilter.value;
+
+                const filtered = plans.filter(plan => {
+                    const matchesSearch = plan.planId.toLowerCase().includes(searchTerm) || 
+                                          plan.planName.toLowerCase().includes(searchTerm);
+                    const matchesType = selectedType === 'all' || plan.planType.startsWith(selectedType);
+
+                    return matchesSearch && matchesType;
+                });
+
+                displayPlans(filtered);
+            };
+
+            planSearch.addEventListener('input', filterPlans);
+            planTypeFilter.addEventListener('change', filterPlans);
+
+            displayPlans(plans);
+        });
+    </script>
+</body>
+</html>
