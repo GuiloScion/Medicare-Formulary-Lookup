@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SciViz-Edu Interactive Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #app-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 60px 1fr 80px;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* Header */
+        #header {
+            grid-column: 1 / -1;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 2px solid #4a90e2;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        #title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #4a90e2;
+        }
+
+        #metadata {
+            font-size: 14px;
+            color: #888;
+            margin-left: auto;
+        }
+
+        /* Left Sidebar - Learning Objectives */
+        #left-sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4a90e2;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .objective-item {
+            background: rgba(74, 144, 226, 0.1);
+            border-left: 3px solid #4a90e2;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .objective-item:hover {
+            background: rgba(74, 144, 226, 0.2);
+            transform: translateX(5px);
+        }
+
+        .objective-item.completed {
+            border-left-color: #2ecc71;
+            opacity: 0.7;
+        }
+
+        .objective-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .objective-bloom {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Main Canvas Area */
+        #canvas-container {
+            position: relative;
+            background: #0a0a0a;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #subtitle-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 8px;
+            max-width: 80%;
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        #quiz-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 40, 0.95);
+            border: 2px solid #4a90e2;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .quiz-question {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-option {
+            background: rgba(74, 144, 226, 0.1);
+            border: 2px solid #4a90e2;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .quiz-option:hover {
+            background: rgba(74, 144, 226, 0.3);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            border-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.2);
+        }
+
+        .quiz-option.incorrect {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.2);
+        }
+
+        .quiz-feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 16px;
+            display: none;
+        }
+
+        .quiz-feedback.correct {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .quiz-feedback.incorrect {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .quiz-continue {
+            margin-top: 15px;
+            padding: 12px 30px;
+            background: #4a90e2;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quiz-continue:hover {
+            background: #357abd;
+            transform: scale(1.05);
+        }
+
+        /* Right Sidebar - Controls */
+        #right-sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+            color: #ccc;
+        }
+
+        .control-description {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #357abd;
+            transform: scale(1.2);
+        }
+
+        .control-value {
+            display: block;
+            text-align: center;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #4a90e2;
+            font-weight: 600;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4a90e2;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4a90e2;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        /* Timeline Controls */
+        #timeline {
+            grid-column: 1 / -1;
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid #333;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #play-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #4a90e2;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        #play-button:hover {
+            background: #357abd;
+            transform: scale(1.1);
+        }
+
+        #timeline-slider {
+            flex: 1;
+            height: 8px;
+        }
+
+        #time-display {
+            font-size: 14px;
+            color: #888;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        /* Progress indicators */
+        .progress-ring {
+            width: 40px;
+            height: 40px;
+            margin-left: auto;
+        }
+
+        .progress-ring-circle {
+            stroke: #4a90e2;
+            stroke-width: 3;
+            fill: transparent;
+            transform-origin: 50% 50%;
+            transform: rotate(-90deg);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            #app-container {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            #app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr 200px 80px;
+            }
+
+            #left-sidebar, #right-sidebar {
+                grid-column: 1;
+                border: none;
+                border-top: 1px solid #333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Header -->
+        <div id="header">
+            <div id="title">Loading...</div>
+            <div id="metadata"></div>
+        </div>
+
+        <!-- Left Sidebar - Learning Objectives & Concepts -->
+        <div id="left-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Learning Objectives</div>
+                <div id="objectives-list"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Key Concepts</div>
+                <div id="concepts-list"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Progress</div>
+                <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring-circle" stroke-dasharray="100 100" 
+                            stroke-dashoffset="0" cx="20" cy="20" r="16"/>
+                </svg>
+                <div id="progress-text">0% Complete</div>
+            </div>
+        </div>
+
+        <!-- Main Canvas -->
+        <div id="canvas-container">
+            <video id="canvas" autoplay muted></video>
+            
+            <div id="subtitle-overlay"></div>
+            
+            <div id="quiz-overlay">
+                <div class="quiz-question" id="quiz-question"></div>
+                <div class="quiz-options" id="quiz-options"></div>
+                <div class="quiz-feedback" id="quiz-feedback"></div>
+                <button class="quiz-continue" id="quiz-continue">Continue</button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Interactive Controls -->
+        <div id="right-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Interactive Controls</div>
+                <div id="controls-list"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Actions</div>
+                <button id="reset-button">Reset Scene</button>
+                <button id="export-progress">Export Progress</button>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div id="timeline">
+            <button id="play-button">▶</button>
+            <input type="range" id="timeline-slider" min="0" max="100" value="0">
+            <div id="time-display">0:00 / 0:00</div>
+        </div>
+    </div>
+
+    <script>
+        // SciViz-Edu Interactive Engine
+        class SciVizPlayer {
+            constructor() {
+                this.sceneData = null;
+                this.currentTime = 0;
+                this.duration = 0;
+                this.isPlaying = false;
+                this.interactiveState = {};
+                this.completedObjectives = new Set();
+                this.quizResults = {};
+                
+                this.initializeUI();
+                this.loadSceneData();
+            }
+
+            initializeUI() {
+                // Play/pause button
+                document.getElementById('play-button').addEventListener('click', () => {
+                    this.togglePlayPause();
+                });
+
+                // Timeline slider
+                document.getElementById('timeline-slider').addEventListener('input', (e) => {
+                    this.seekTo(parseFloat(e.target.value));
+                });
+
+                // Reset button
+                document.getElementById('reset-button').addEventListener('click', () => {
+                    this.reset();
+                });
+
+                // Quiz continue button
+                document.getElementById('quiz-continue').addEventListener('click', () => {
+                    this.closeQuiz();
+                });
+            }
+
+            async loadSceneData() {
+                // In real implementation, this would load from the exported JSON
+                // For demo purposes, using sample data
+                this.sceneData = {
+                    metadata: {
+                        scene_id: "demo_scene",
+                        title: "Interactive Network Dynamics",
+                        description: "Explore how networks behave under different conditions",
+                        duration: 120,
+                        difficulty: "INTERMEDIATE"
+                    },
+                    objectives: [
+                        {
+                            id: "obj_1",
+                            description: "Understand network topology and connectivity",
+                            bloom_level: "UNDERSTAND",
+                            assessment_method: "interactive"
+                        },
+                        {
+                            id: "obj_2",
+                            description: "Analyze flow dynamics in networks",
+                            bloom_level: "ANALYZE",
+                            assessment_method: "quiz"
+                        }
+                    ],
+                    concepts: [
+                        {
+                            id: "concept_1",
+                            name: "Network Topology",
+                            definition: "The arrangement of nodes and edges in a network"
+                        },
+                        {
+                            id: "concept_2",
+                            name: "Flow Dynamics",
+                            definition: "How resources or information move through network connections"
+                        }
+                    ],
+                    interactions: [
+                        {
+                            id: "slider_connectivity",
+                            type: "slider",
+                            label: "Network Connectivity",
+                            target: "connectivity",
+                            range: [0, 1],
+                            default: 0.5,
+                            description: "Controls how densely connected the network is"
+                        },
+                        {
+                            id: "slider_flow_rate",
+                            type: "slider",
+                            label: "Flow Rate",
+                            target: "flow_rate",
+                            range: [0, 10],
+                            default: 5,
+                            description: "Speed of resource flow through connections"
+                        },
+                        {
+                            id: "toggle_show_labels",
+                            type: "toggle",
+                            label: "Show Labels",
+                            target: "show_labels",
+                            default: true,
+                            description: "Display node labels"
+                        }
+                    ],
+                    assessments: [
+                        {
+                            timestamp: 30,
+                            question: {
+                                id: "q1",
+                                text: "What happens when you increase network connectivity?",
+                                type: "multiple_choice",
+                                options: [
+                                    "More nodes become isolated",
+                                    "More paths exist between nodes",
+                                    "The network becomes slower",
+                                    "Nodes disappear"
+                                ],
+                                correct_answer: "More paths exist between nodes",
+                                explanation: "Higher connectivity means more edges, creating more possible paths."
+                            },
+                            feedback_correct: "Excellent! You understand network connectivity.",
+                            feedback_incorrect: "Not quite. Think about what edges do in a network."
+                        }
+                    ],
+                    narrative: [
+                        {
+                            start: 0,
+                            end: 5,
+                            text: "Welcome to interactive network exploration",
+                            position: "bottom"
+                        },
+                        {
+                            start: 5,
+                            end: 10,
+                            text: "Use the controls on the right to manipulate the network",
+                            position: "bottom"
+                        }
+                    ]
+                };
+
+                this.duration = this.sceneData.metadata.duration;
+                this.renderUI();
+            }
+
+            renderUI() {
+                // Set title
+                document.getElementById('title').textContent = this.sceneData.metadata.title;
+                document.getElementById('metadata').textContent = 
+                    `${this.sceneData.metadata.difficulty} • ${Math.floor(this.duration / 60)}:${(this.duration % 60).toString().padStart(2, '0')}`;
+
+                // Render objectives
+                const objectivesList = document.getElementById('objectives-list');
+                this.sceneData.objectives.forEach(obj => {
+                    const div = document.createElement('div');
+                    div.className = 'objective-item';
+                    div.innerHTML = `
+                        <div class="objective-text">${obj.description}</div>
+                        <div class="objective-bloom">${obj.bloom_level}</div>
+                    `;
+                    objectivesList.appendChild(div);
+                });
+
+                // Render concepts
+                const conceptsList = document.getElementById('concepts-list');
+                this.sceneData.concepts.forEach(concept => {
+                    const div = document.createElement('div');
+                    div.className = 'objective-item';
+                    div.innerHTML = `
+                        <div class="objective-text"><strong>${concept.name}</strong></div>
+                        <div class="control-description">${concept.definition}</div>
+                    `;
+                    conceptsList.appendChild(div);
+                });
+
+                // Render controls
+                const controlsList = document.getElementById('controls-list');
+                this.sceneData.interactions.forEach(control => {
+                    const div = document.createElement('div');
+                    div.className = 'control-group';
+                    
+                    if (control.type === 'slider') {
+                        div.innerHTML = `
+                            <label class="control-label">${control.label}</label>
+                            <div class="control-description">${control.description}</div>
+                            <input type="range" 
+                                   id="${control.id}" 
+                                   min="${control.range[0]}" 
+                                   max="${control.range[1]}" 
+                                   value="${control.default}"
+                                   step="0.1">
+                            <span class="control-value" id="${control.id}_value">${control.default}</span>
+                        `;
+                        
+                        setTimeout(() => {
+                            const slider = document.getElementById(control.id);
+                            const valueDisplay = document.getElementById(`${control.id}_value`);
+                            slider.addEventListener('input', (e) => {
+                                const value = parseFloat(e.target.value);
+                                valueDisplay.textContent = value.toFixed(1);
+                                this.handleInteraction(control.target, value);
+                            });
+                        }, 0);
+                        
+                    } else if (control.type === 'toggle') {
+                        div.innerHTML = `
+                            <label class="control-label">${control.label}</label>
+                            <div class="control-description">${control.description}</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="${control.id}" ${control.default ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        `;
+                        
+                        setTimeout(() => {
+                            document.getElementById(control.id).addEventListener('change', (e) => {
+                                this.handleInteraction(control.target, e.target.checked);
+                            });
+                        }, 0);
+                    }
+                    
+                    controlsList.appendChild(div);
+                });
+            }
+
+            togglePlayPause() {
+                this.isPlaying = !this.isPlaying;
+                const button = document.getElementById('play-button');
+                button.textContent = this.isPlaying ? '⏸' : '▶';
+                
+                if (this.isPlaying) {
+                    this.startAnimation();
+                }
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    if (!this.isPlaying) return;
+                    
+                    this.currentTime += 1/30; // 30 FPS
+                    if (this.currentTime >= this.duration) {
+                        this.currentTime = this.duration;
+                        this.isPlaying = false;
+                        document.getElementById('play-button').textContent = '▶';
+                    }
+                    
+                    this.updateTimeline();
+                    this.checkNarrative();
+                    this.checkAssessments();
+                    
+                    if (this.isPlaying) {
+                        requestAnimationFrame(animate);
+                    }
+                };
+                
+                requestAnimationFrame(animate);
+            }
+
+            updateTimeline() {
+                const slider = document.getElementById('timeline-slider');
+                slider.value = (this.currentTime / this.duration) * 100;
+                
+                const currentMin = Math.floor(this.currentTime / 60);
+                const currentSec = Math.floor(this.currentTime % 60);
+                const totalMin = Math.floor(this.duration / 60);
+                const totalSec = Math.floor(this.duration % 60);
+                
+                document.getElementById('time-display').textContent = 
+                    `${currentMin}:${currentSec.toString().padStart(2, '0')} / ${totalMin}:${totalSec.toString().padStart(2, '0')}`;
+            }
+
+            checkNarrative() {
+                const current = this.sceneData.narrative.find(n => 
+                    this.currentTime >= n.start && this.currentTime < n.end
+                );
+                
+                const overlay = document.getElementById('subtitle-overlay');
+                if (current) {
+                    overlay.textContent = current.text;
+                    overlay.style.display = 'block';
+                } else {
+                    overlay.style.display = 'none';
+                }
+            }
+
+            checkAssessments() {
+                const assessment = this.sceneData.assessments.find(a => 
+                    Math.abs(this.currentTime - a.timestamp) < 0.5 && 
+                    !this.quizResults[a.question.id]
+                );
+                
+                if (assessment) {
+                    this.showQuiz(assessment);
+                }
+            }
+
+            showQuiz(assessment) {
+                this.isPlaying = false;
+                document.getElementById('play-button').textContent = '▶';
+                
+                const overlay = document.getElementById('quiz-overlay');
+                const question = document.getElementById('quiz-question');
+                const options = document.getElementById('quiz-options');
+                
+                question.textContent = assessment.question.text;
+                options.innerHTML = '';
+                
+                assessment.question.options.forEach(option => {
+                    const button = document.createElement('div');
+                    button.className = 'quiz-option';
+                    button.textContent = option;
+                    button.addEventListener('click', () => {
+                        this.submitAnswer(assessment, option);
+                    });
+                    options.appendChild(button);
+                });
+                
+                overlay.style.display = 'block';
+            }
+
+            submitAnswer(assessment, answer) {
+                const feedback = document.getElementById('quiz-feedback');
+                const isCorrect = answer === assessment.question.correct_answer;
+                
+                this.quizResults[assessment.question.id] = isCorrect;
+                
+                // Update option styles
+                const options = document.querySelectorAll('.quiz-option');
+                options.forEach(opt => {
+                    if (opt.textContent === assessment.question.correct_answer) {
+                        opt.classList.add('correct');
+                    } else if (opt.textContent === answer && !isCorrect) {
+                        opt.classList.add('incorrect');
+                    }
+                    opt.style.pointerEvents = 'none';
+                });
+                
+                // Show feedback
+                feedback.className = `quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+                feedback.textContent = isCorrect ? 
+                    assessment.feedback_correct : 
+                    assessment.feedback_incorrect;
+                
+                if (!isCorrect && assessment.question.explanation) {
+                    feedback.textContent += ` ${assessment.question.explanation}`;
+                }
+                
+                feedback.style.display = 'block';
+                
+                if (isCorrect) {
+                    this.markObjectiveComplete(assessment.question.id);
+                }
+            }
+
+            closeQuiz() {
+                document.getElementById('quiz-overlay').style.display = 'none';
+                document.getElementById('quiz-feedback').style.display = 'none';
+                this.isPlaying = true;
+                this.startAnimation();
+            }
+
+            handleInteraction(target, value) {
+                this.interactiveState[target] = value;
+                console.log(`${target} = ${value}`);
+                // In real implementation, this would update the visualization
+            }
+
+            markObjectiveComplete(questionId) {
+                this.completedObjectives.add(questionId);
+                this.updateProgress();
+            }
+
+            updateProgress() {
+                const total = this.sceneData.objectives.length;
+                const completed = this.completedObjectives.size;
+                const percentage = Math.round((completed / total) * 100);
+                
+                document.getElementById('progress-text').textContent = `${percentage}% Complete`;
+                
+                // Update progress ring
+                const circle = document.querySelector('.progress-ring-circle');
+                const circumference = 2 * Math.PI * 16;
+                const offset = circumference - (percentage / 100) * circumference;
+                circle.style.strokeDashoffset = offset;
+            }
+
+            seekTo(percentage) {
+                this.currentTime = (percentage / 100) * this.duration;
+                this.updateTimeline();
+            }
+
+            reset() {
+                this.currentTime = 0;
+                this.isPlaying = false;
+                this.interactiveState = {};
+                this.completedObjectives.clear();
+                this.quizResults = {};
+                
+                document.getElementById('play-button').textContent = '▶';
+                this.updateTimeline();
+                this.updateProgress();
+                
+                // Reset all controls to defaults
+                this.sceneData.interactions.forEach(control => {
+                    const element = document.getElementById(control.id);
+                    if (control.type === 'slider') {
+                        element.value = control.default;
+                        document.getElementById(`${control.id}_value`).textContent = control.default;
+                    } else if (control.type === 'toggle') {
+                        element.checked = control.default;
+                    }
+                });
+            }
+        }
+
+        // Initialize player when page loads
+        window.addEventListener('load', () => {
+            new SciVizPlayer();
+        });
+    </script>
+</body>
+</html>
